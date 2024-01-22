@@ -8,19 +8,38 @@ token=""
 secret=""
 domain=""
 
-
 IFS='.' read -r subdomain SecTopDomain <<< "$domain"
+ipv6_regex="(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))"
+
+ipv6TEST="2a01:799:19eb:9300:6573:2132:8575:ecf7";
 
 
-id="1680019"
+### Checks for the current public IPv6
+#current_ip=$(curl -s -6 https://api64.ipify.org || curl -s -6 https://ipv6.icanhazip.com)
 
-IPv6_regex=(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))
+#if [[ ! $current_ip =~ ^$ipv6_regex$ ]]; then
+#    echo "Failed to validate the IP address"
+#    exit 1
+#fi
 
-### Gets the json info about the top domain
-curl https://$token:$secret@api.domeneshop.no/v0/domains?domain=$SecTopDomain
+idRegex='"id":"\K\d+';
+ipv4regex='^ip=(\d.*)'
+### '\"id":(\d*)'
+
+### Gets the json info about the top domain and gets the domain ID
+idRegex='\"id":(\d*)';
+testID=$( curl https://$token:$secret@api.domeneshop.no/v0/domains?domain=$SecTopDomain); ret=$?
+id=$(echo "$testID" | grep -oP '"id":\K\d+')
 
 ### Gets the json info abut the subdomain
-curl https://$token:$secret@api.domeneshop.no/v0/domains/$id/dns?host=$subdomain
+echo $(curl https://$token:$secret@api.domeneshop.no/v0/domains/$id/dns?host=$subdomain);
 
 ### Updates the DNS record of the provided domain 
-curl https://$token:$secret@api.domeneshop.no/v0/dyndns/update?hostname=$domain
+if [[ $old_ip != $current_ip ]] then
+    #curl https://$token:$secret@api.domeneshop.no/v0/dyndns/update?hostname=$domain
+    echo "They are NOT the same"
+else
+    echo "they are the same"
+fi
+
+cat > hell.txt
